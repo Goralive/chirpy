@@ -13,6 +13,10 @@ func handlerChirpsValidate(response http.ResponseWriter, request *http.Request) 
 	type validResponse struct {
 		Valid bool `json:"valid"`
 	}
+	type cleanResponse struct {
+		CleanedBody string `json:"cleaned_body"`
+	}
+
 	const maxChirpLenght = 140
 
 	decoder := json.NewDecoder(request.Body)
@@ -30,8 +34,8 @@ func handlerChirpsValidate(response http.ResponseWriter, request *http.Request) 
 		return
 	}
 
-	respondWithJSON(response, http.StatusOK, validResponse{
-		Valid: true,
+	respondWithJSON(response, http.StatusOK, cleanResponse{
+		CleanedBody: cleanChirp(content),
 	})
 }
 
@@ -47,5 +51,5 @@ func cleanChirp(content string) string {
 			}
 		}
 	}
-	return strings.Join(words, "")
+	return strings.Join(words, " ")
 }
