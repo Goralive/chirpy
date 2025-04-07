@@ -12,47 +12,22 @@ func handlerChirpsValidate(response http.ResponseWriter, request *http.Request) 
 	type validResponse struct {
 		Valid bool `json:"valid"`
 	}
+	const maxChirpLenght = 140
 
 	decoder := json.NewDecoder(request.Body)
 	params := parameters{}
 	err := decoder.Decode(&params)
 	if err != nil {
-		response.Header().Set("Content-Type", "application/json")
-		response.WriteHeader(500)
-		response.Write([]byte("Something went wrong"))
+		respondWithError(response, http.StatusInternalServerError, "Couldn't decode parameters", err)
 		return
 	}
 
-	if len(params.Body) > 140 {
-		resp := errorResponse{
-			Error: "Chirp is too long",
-		}
-		dat, err := json.Marshal(resp)
-		if err != nil {
-			response.Header().Set("Content-Type", "application/json")
-			response.WriteHeader(500)
-			response.Write([]byte("Something went wrong"))
-			return
-		}
-		response.Header().Set("Content-Type", "application/json")
-		response.WriteHeader(http.StatusBadRequest)
-		response.Write(dat)
+	if len(params.Body) > maxChirpLenght {
+		respondWithError(response, http.StatusBadRequest, "Chirp is too long", nil)
 		return
 	}
 
-	respBody := validResponse{
+	respondWithJSON(response, http.StatusOK, validResponse{
 		Valid: true,
-	}
-
-	dat, err := json.Marshal(respBody)
-	if err != nil {
-		response.Header().Set("Content-Type", "application/json")
-		response.WriteHeader(500)
-		response.Write([]byte("Something went wrong"))
-		return
-	}
-
-	response.Header().Set("Content-Type", "application/json")
-	response.WriteHeader(http.StatusOK)
-	response.Write(dat)
+	})
 }
