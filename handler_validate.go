@@ -3,18 +3,20 @@ package main
 import (
 	"encoding/json"
 	"net/http"
+	"slices"
 	"strings"
+
+	"github.com/google/uuid"
 )
 
-func handlerChirpsValidate(response http.ResponseWriter, request *http.Request) {
+func (cfg *apiConfig) handlerCreateChirps(response http.ResponseWriter, request *http.Request) {
 	type parameters struct {
 		Body string `json:"body"`
 	}
-	type validResponse struct {
-		Valid bool `json:"valid"`
-	}
+
 	type cleanResponse struct {
-		CleanedBody string `json:"cleaned_body"`
+		CleanedBody string     `json:"cleaned_body"`
+		UserId      uuid.UUIDs `json:"user_id"`
 	}
 
 	const maxChirpLenght = 140
@@ -34,6 +36,7 @@ func handlerChirpsValidate(response http.ResponseWriter, request *http.Request) 
 		return
 	}
 
+	// chirp, err := cfg.db
 	respondWithJSON(response, http.StatusOK, cleanResponse{
 		CleanedBody: cleanChirp(content),
 	})
@@ -44,11 +47,8 @@ func cleanChirp(content string) string {
 	words := strings.Split(content, " ")
 	for i, word := range words {
 		lower := strings.ToLower(word)
-		for _, profane := range profaneWords {
-			if lower == profane {
-				words[i] = "****"
-				break
-			}
+		if slices.Contains(profaneWords, lower) {
+			words[i] = "****"
 		}
 	}
 	return strings.Join(words, " ")

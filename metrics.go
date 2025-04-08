@@ -26,8 +26,13 @@ func (cfg *apiConfig) middlewareMetricsInc(next http.Handler) http.Handler {
 }
 
 func (cfg *apiConfig) resetHandler(response http.ResponseWriter, request *http.Request) {
+	if cfg.enviroment != "dev" {
+		respondWithError(response, http.StatusForbidden, "Allowed in dev enviroment", nil)
+		return
+	}
 	cfg.fileserverHits.Store(0)
+	cfg.db.DeleteAllUsers(request.Context())
 	response.Header().Set("Content-Type", "text/plain; charset=utf-8")
 	response.WriteHeader(http.StatusOK)
-	response.Write([]byte("Metrics was reseted"))
+	response.Write([]byte("Metrics was reseted. Users was deleted"))
 }
