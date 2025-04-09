@@ -13,9 +13,9 @@ const createUser = `-- name: CreateUser :one
 INSERT INTO users (
     id, created_at, updated_at, email
 ) VALUES (
-    gen_random_uuid(), NOW(), NOW(), $1
+    gen_random_uuid(), now(), now(), $1
 )
-RETURNING id, created_at, updated_at, email
+RETURNING id, create_at, update_at, email
 `
 
 func (q *Queries) CreateUser(ctx context.Context, email string) (User, error) {
@@ -23,8 +23,8 @@ func (q *Queries) CreateUser(ctx context.Context, email string) (User, error) {
 	var i User
 	err := row.Scan(
 		&i.ID,
-		&i.CreatedAt,
-		&i.UpdatedAt,
+		&i.CreateAt,
+		&i.UpdateAt,
 		&i.Email,
 	)
 	return i, err
