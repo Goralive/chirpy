@@ -17,7 +17,7 @@ INSERT INTO users (
 ) VALUES (
     gen_random_uuid(), now(), now(), $1
 )
-RETURNING id, create_at, update_at, email
+RETURNING id, created_at, updated_at, email
 `
 
 func (q *Queries) CreateUser(ctx context.Context, email string) (User, error) {
@@ -25,8 +25,8 @@ func (q *Queries) CreateUser(ctx context.Context, email string) (User, error) {
 	var i User
 	err := row.Scan(
 		&i.ID,
-		&i.CreateAt,
-		&i.UpdateAt,
+		&i.CreatedAt,
+		&i.UpdatedAt,
 		&i.Email,
 	)
 	return i, err
@@ -42,7 +42,7 @@ func (q *Queries) DeleteAllUsers(ctx context.Context) error {
 }
 
 const getUser = `-- name: GetUser :one
-SELECT id, create_at, update_at, email FROM users
+SELECT id, created_at, updated_at, email FROM users
 WHERE id = $1
 `
 
@@ -51,8 +51,8 @@ func (q *Queries) GetUser(ctx context.Context, id uuid.UUID) (User, error) {
 	var i User
 	err := row.Scan(
 		&i.ID,
-		&i.CreateAt,
-		&i.UpdateAt,
+		&i.CreatedAt,
+		&i.UpdatedAt,
 		&i.Email,
 	)
 	return i, err
