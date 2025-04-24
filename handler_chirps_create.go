@@ -13,9 +13,9 @@ import (
 
 type Chirp struct {
 	Id        uuid.UUID `json:"id"`
-	Body      string    `json:"body"`
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
+	Body      string    `json:"body"`
 	UserId    uuid.UUID `json:"user_id"`
 }
 
