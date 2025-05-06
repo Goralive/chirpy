@@ -6,6 +6,8 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/Goralive/chirpy/internal/auth"
+	"github.com/Goralive/chirpy/internal/database"
 	"github.com/google/uuid"
 )
 
@@ -18,7 +20,8 @@ type User struct {
 
 func (cfg *apiConfig) handlerCreateUser(response http.ResponseWriter, request *http.Request) {
 	type parameters struct {
-		Email string `json:"email"`
+		Email    string `json:"email"`
+		Password string `json:"password"`
 	}
 
 	type userResponse struct {
@@ -34,8 +37,17 @@ func (cfg *apiConfig) handlerCreateUser(response http.ResponseWriter, request *h
 	}
 
 	email := params.Email
+	password := params.Password
 
-	user, err := cfg.db.CreateUser(request.Context(), email)
+	hash_password, err := auth.HashPassword(password)
+	if err != nil {
+		respondWithError(response, http.StatusInternalServerError, "Couldn't hashed the password", err)
+	}
+
+	user, err := cfg.db.CreateUser(request.Context(), database.CreateUserParams{
+		Email:          email,
+		HashedPassword: hash_password,
+	})
 	if err != nil {
 		respondWithError(response, http.StatusInternalServerError, "Couldn't save user to db", err)
 		return
