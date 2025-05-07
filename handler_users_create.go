@@ -19,13 +19,13 @@ type User struct {
 }
 
 func (cfg *apiConfig) handlerCreateUser(response http.ResponseWriter, request *http.Request) {
+	type userResponse struct {
+		User
+	}
+
 	type parameters struct {
 		Email    string `json:"email"`
 		Password string `json:"password"`
-	}
-
-	type userResponse struct {
-		User
 	}
 
 	decoder := json.NewDecoder(request.Body)
