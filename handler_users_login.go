@@ -42,10 +42,8 @@ func (cfg *apiConfig) handlerLoginUser(response http.ResponseWriter, request *ht
 
 	respondWithJSON(response, http.StatusOK, userResponse{
 		User: User{
-			ID:        user.ID,
-			CreatedAt: user.CreatedAt,
-			UpdatedAt: user.UpdatedAt,
-			Email:     user.Email,
+			ID:    user.ID,
+			Email: user.Email,
 		},
 	})
 }

@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
 	"slices"
 	"strings"
@@ -25,20 +26,11 @@ func (cfg *apiConfig) handlerCreateChirps(response http.ResponseWriter, request 
 		UserId uuid.UUID `json:"user_id"`
 	}
 
-	const maxChirpLenght = 140
-
 	decoder := json.NewDecoder(request.Body)
 	params := parameters{}
 	err := decoder.Decode(&params)
 	if err != nil {
 		respondWithError(response, http.StatusInternalServerError, "Couldn't decode parameters", err)
-		return
-	}
-
-	content := params.Body
-
-	if len(content) > maxChirpLenght {
-		respondWithError(response, http.StatusBadRequest, "Chirp is too long", nil)
 		return
 	}
 
@@ -48,8 +40,13 @@ func (cfg *apiConfig) handlerCreateChirps(response http.ResponseWriter, request 
 		return
 	}
 
+	cleaned, err := validateChirp(params.Body)
+	if err != nil {
+		respondWithError(response, http.StatusBadRequest, err.Error(), err)
+	}
+
 	chirp, err := cfg.db.CreateChirp(request.Context(), database.CreateChirpParams{
-		Body:   cleanChirp(content),
+		Body:   cleaned,
 		UserID: user.ID,
 	})
 	if err != nil {
@@ -57,7 +54,6 @@ func (cfg *apiConfig) handlerCreateChirps(response http.ResponseWriter, request 
 		return
 	}
 
-	// chirp, err := cfg.db
 	respondWithJSON(response, http.StatusCreated, Chirp{
 		Id:        chirp.ID,
 		CreatedAt: chirp.CreatedAt,
@@ -67,12 +63,23 @@ func (cfg *apiConfig) handlerCreateChirps(response http.ResponseWriter, request 
 	})
 }
 
-func cleanChirp(content string) string {
+func validateChirp(content string) (string, error) {
+	const maxChirpLenght = 140
+
+	if len(content) > maxChirpLenght {
+		return "", errors.New("Chirp is too long")
+	}
+
 	profaneWords := []string{"kerfuffle", "sharbert", "fornax"}
+	cleaned := cleanChirp(content, profaneWords)
+	return cleaned, nil
+}
+
+func cleanChirp(content string, badWords []string) string {
 	words := strings.Split(content, " ")
 	for i, word := range words {
 		lower := strings.ToLower(word)
-		if slices.Contains(profaneWords, lower) {
+		if slices.Contains(badWords, lower) {
 			words[i] = "****"
 		}
 	}
