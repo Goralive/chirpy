@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/Goralive/chirpy/internal/auth"
 	"github.com/Goralive/chirpy/internal/database"
 	"github.com/google/uuid"
 )
@@ -22,8 +23,20 @@ type Chirp struct {
 
 func (cfg *apiConfig) handlerCreateChirps(response http.ResponseWriter, request *http.Request) {
 	type parameters struct {
-		Body   string    `json:"body"`
-		UserId uuid.UUID `json:"user_id"`
+		Body string `json:"body"`
+	}
+
+	token, tokenError := auth.GetBearerToken(request.Header)
+	if tokenError != nil {
+		respondWithError(response, http.StatusUnauthorized, "invalid token", tokenError)
+		return
+	}
+
+	id, validateJwtError := auth.ValidateJWT(token, cfg.signature)
+
+	if validateJwtError != nil {
+		respondWithError(response, http.StatusUnauthorized, "invalid token", validateJwtError)
+		return
 	}
 
 	decoder := json.NewDecoder(request.Body)
@@ -34,7 +47,7 @@ func (cfg *apiConfig) handlerCreateChirps(response http.ResponseWriter, request 
 		return
 	}
 
-	user, err := cfg.db.GetUser(request.Context(), params.UserId)
+	user, err := cfg.db.GetUser(request.Context(), id)
 	if err != nil {
 		respondWithError(response, http.StatusBadRequest, "User not found", nil)
 		return

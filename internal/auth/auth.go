@@ -29,7 +29,7 @@ func HashPassword(password string) (string, error) {
 }
 
 // CheckPasswordHash -
-func CheckPasswordHash(password, hash string) error {
+func CheckPasswordHash(hash, password string) error {
 	return bcrypt.CompareHashAndPassword([]byte(hash), []byte(password))
 }
 
@@ -81,18 +81,18 @@ func ValidateJWT(tokenString, tokenSecret string) (uuid.UUID, error) {
 
 func GetBearerToken(headers http.Header) (string, error) {
 	authHeader := headers.Get("Authorization")
+	authHeader = strings.TrimSpace(authHeader)
 	if authHeader == "" {
 		return "", errors.New("authorization header is missing")
 	}
+	parts := strings.Fields(authHeader)
 
-	token := strings.Split(authHeader, " ")
-
-	if len(token) != 2 {
+	if len(parts) != 2 {
 		return "", errors.New("invalid authorization token")
 	}
 
-	if token[0] != "Bearer" || len(token[1]) == 0 {
+	if !strings.EqualFold(parts[0], "bearer") || len(parts[1]) == 0 {
 		return "", errors.New("invalid authorization token")
 	}
-	return token[1], nil
+	return parts[1], nil
 }

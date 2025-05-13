@@ -16,17 +16,22 @@ type apiConfig struct {
 	fileserverHits atomic.Int32
 	db             *database.Queries
 	enviroment     string
+	signature      string
 }
 
 func main() {
 	godotenv.Load()
 	dbUrl := os.Getenv("DB_URL")
 	platform := os.Getenv("PLATFORM")
+	signature := os.Getenv("SIGNATURE")
 	if dbUrl == "" {
 		log.Fatal("DB_URL must be set")
 	}
 	if platform == "" {
 		log.Fatal("PLATFORM must be set")
+	}
+	if signature == "" {
+		log.Fatal("SIGNATURE must be set")
 	}
 
 	db, err := sql.Open("postgres", dbUrl)
@@ -44,6 +49,7 @@ func main() {
 		fileserverHits: atomic.Int32{},
 		db:             dbQueries,
 		enviroment:     platform,
+		signature:      signature,
 	}
 	fileHandler := http.StripPrefix("/app", fileServer(path))
 
