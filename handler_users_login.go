@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/Goralive/chirpy/internal/auth"
+	"github.com/Goralive/chirpy/internal/database"
 )
 
 func (cfg *apiConfig) handlerLoginUser(response http.ResponseWriter, request *http.Request) {
@@ -50,9 +51,21 @@ func (cfg *apiConfig) handlerLoginUser(response http.ResponseWriter, request *ht
 		respondWithError(response, http.StatusInternalServerError, "Couldn't create token", err)
 		return
 	}
-	refresh_token, err := auth.MakeRefreshToken()
+
+	refreshToken, err := auth.MakeRefreshToken()
 	if err != nil {
 		respondWithError(response, http.StatusInternalServerError, "Couldn't create refresh token", err)
+		return
+	}
+
+	expiresAt := time.Now().Add(60 * 24 * time.Hour)
+	data, err := cfg.db.CreateRefreshToken(request.Context(), database.CreateRefreshTokenParams{
+		Token:     refreshToken,
+		UserID:    user.ID,
+		ExpiresAt: expiresAt,
+	})
+	if err != nil {
+		respondWithError(response, http.StatusInternalServerError, "Couldn't save refresh token", err)
 		return
 	}
 
@@ -64,6 +77,6 @@ func (cfg *apiConfig) handlerLoginUser(response http.ResponseWriter, request *ht
 			UpdatedAt: user.UpdatedAt,
 		},
 		Token:        token,
-		RefreshToken: refresh_token,
+		RefreshToken: data.Token,
 	})
 }
