@@ -11,20 +11,20 @@ func (cfg *apiConfig) handlerRefreshToken(response http.ResponseWriter, request 
 	type tokenResponse struct {
 		Token string `json:"token"`
 	}
+
 	refreshToken, err := auth.GetBearerToken(request.Header)
 	if err != nil {
 		respondWithError(response, http.StatusUnauthorized, "No token in header", err)
 		return
 	}
 
-	dbRefreshToken, err := cfg.db.GetUserFromRefreshToken(request.Context(), refreshToken)
+	user, err := cfg.db.GetUserFromRefreshToken(request.Context(), refreshToken)
 	if err != nil {
 		respondWithError(response, http.StatusUnauthorized, "User not found from refreshToken", err)
 		return
 	}
 
-	tokenExpiration := time.Duration(3600) * time.Second
-	token, err := auth.MakeJWT(dbRefreshToken.UserID, cfg.signature, tokenExpiration)
+	token, err := auth.MakeJWT(user.UserID, cfg.signature, time.Hour)
 	if err != nil {
 		respondWithError(response, http.StatusInternalServerError, "Can't create jwt token", err)
 		return

@@ -14,7 +14,6 @@ FROM refresh_tokens
     AND expires_at > NOW();
 
 -- name: RevokeToken :exec
-UPDATE refresh_tokens
-    SET updated_at = NOW(),
+UPDATE refresh_tokens SET updated_at = NOW(),
     revoked_at = NOW()
   WHERE token = $1;
