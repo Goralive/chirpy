@@ -24,7 +24,7 @@ func (cfg *apiConfig) handlerRefreshToken(response http.ResponseWriter, request 
 		return
 	}
 
-	token, err := auth.MakeJWT(user.UserID, cfg.signature, time.Hour)
+	token, err := auth.MakeJWT(user.ID, cfg.signature, time.Hour)
 	if err != nil {
 		respondWithError(response, http.StatusInternalServerError, "Can't create jwt token", err)
 		return
@@ -42,13 +42,7 @@ func (cfg *apiConfig) handlerRevokeToken(response http.ResponseWriter, request *
 		return
 	}
 
-	dbRefreshToken, err := cfg.db.GetUserFromRefreshToken(request.Context(), refreshToken)
-	if err != nil {
-		respondWithError(response, http.StatusUnauthorized, "User not found from refreshToken", err)
-		return
-	}
-
-	errors := cfg.db.RevokeToken(request.Context(), dbRefreshToken.Token)
+	_, errors := cfg.db.RevokeRefreshToken(request.Context(), refreshToken)
 	if errors != nil {
 		respondWithError(response, http.StatusInternalServerError, "Can't revoke token", err)
 	}
