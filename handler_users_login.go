@@ -71,10 +71,11 @@ func (cfg *apiConfig) handlerLoginUser(response http.ResponseWriter, request *ht
 
 	respondWithJSON(response, http.StatusOK, userResponse{
 		User: User{
-			ID:        user.ID,
-			Email:     user.Email,
-			CreatedAt: user.CreatedAt,
-			UpdatedAt: user.UpdatedAt,
+			ID:          user.ID,
+			Email:       user.Email,
+			CreatedAt:   user.CreatedAt,
+			UpdatedAt:   user.UpdatedAt,
+			IsChirpyRed: user.IsChirpyRed,
 		},
 		Token:        token,
 		RefreshToken: data.Token,

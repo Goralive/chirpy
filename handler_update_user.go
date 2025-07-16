@@ -6,6 +6,7 @@ import (
 
 	"github.com/Goralive/chirpy/internal/auth"
 	"github.com/Goralive/chirpy/internal/database"
+	"github.com/google/uuid"
 )
 
 func (cfg *apiConfig) handlerUpdateUser(response http.ResponseWriter, request *http.Request) {
@@ -57,10 +58,43 @@ func (cfg *apiConfig) handlerUpdateUser(response http.ResponseWriter, request *h
 
 	respondWithJSON(response, http.StatusOK, userResponse{
 		User: User{
-			ID:        user.ID,
-			CreatedAt: user.CreatedAt,
-			UpdatedAt: user.UpdatedAt,
-			Email:     user.Email,
+			ID:          user.ID,
+			CreatedAt:   user.CreatedAt,
+			UpdatedAt:   user.UpdatedAt,
+			Email:       user.Email,
+			IsChirpyRed: user.IsChirpyRed,
 		},
 	})
+}
+
+func (cfg *apiConfig) handlerChirpyRedWebhook(response http.ResponseWriter, request *http.Request) {
+	type data struct {
+		UserId uuid.UUID `json:"user_id"`
+	}
+	type parameters struct {
+		Event string `json:"event"`
+		Data  data   `json:"data"`
+	}
+	decoder := json.NewDecoder(request.Body)
+	params := parameters{}
+	decoderErr := decoder.Decode(&params)
+	if decoderErr != nil {
+		respondWithError(response, http.StatusInternalServerError, "Can't parsed bodyo", decoderErr)
+		return
+	}
+
+	event := params.Event
+	userId := params.Data.UserId
+
+	if event != "user.upgraded" {
+		response.WriteHeader(http.StatusNoContent)
+		return
+	}
+
+	err := cfg.db.UpdateUserChirpyRed(request.Context(), userId)
+	if err != nil {
+		respondWithError(response, http.StatusNotFound, "", err)
+		return
+	}
+	response.WriteHeader(http.StatusNoContent)
 }
