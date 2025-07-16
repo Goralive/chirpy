@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"net/http"
+	"strings"
 
 	"github.com/Goralive/chirpy/internal/auth"
 	"github.com/Goralive/chirpy/internal/database"
@@ -75,11 +76,25 @@ func (cfg *apiConfig) handlerChirpyRedWebhook(response http.ResponseWriter, requ
 		Event string `json:"event"`
 		Data  data   `json:"data"`
 	}
+
+	apiKey, apiKeyErr := auth.GetApiKey(request.Header)
+	if apiKeyErr != nil {
+		respondWithError(response, http.StatusUnauthorized, "Invalid token", apiKeyErr)
+		return
+	}
+
+	localApiKey := cfg.webHookApiKey
+
+	if strings.Compare(apiKey, localApiKey) != 0 {
+		respondWithError(response, http.StatusUnauthorized, "Invalid apiKey", nil)
+		return
+	}
+
 	decoder := json.NewDecoder(request.Body)
 	params := parameters{}
 	decoderErr := decoder.Decode(&params)
 	if decoderErr != nil {
-		respondWithError(response, http.StatusInternalServerError, "Can't parsed bodyo", decoderErr)
+		respondWithError(response, http.StatusInternalServerError, "Can't parsed body", decoderErr)
 		return
 	}
 

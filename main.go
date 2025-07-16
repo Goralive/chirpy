@@ -17,6 +17,7 @@ type apiConfig struct {
 	db             *database.Queries
 	enviroment     string
 	signature      string
+	webHookApiKey  string
 }
 
 func main() {
@@ -24,6 +25,7 @@ func main() {
 	dbUrl := os.Getenv("DB_URL")
 	platform := os.Getenv("PLATFORM")
 	signature := os.Getenv("SIGNATURE")
+	webHookApiKey := os.Getenv("POLKA_KEY")
 	if dbUrl == "" {
 		log.Fatal("DB_URL must be set")
 	}
@@ -32,6 +34,10 @@ func main() {
 	}
 	if signature == "" {
 		log.Fatal("SIGNATURE must be set")
+	}
+
+	if webHookApiKey == "" {
+		log.Fatal("webHookApiKey must be set")
 	}
 
 	db, err := sql.Open("postgres", dbUrl)
@@ -50,6 +56,7 @@ func main() {
 		db:             dbQueries,
 		enviroment:     platform,
 		signature:      signature,
+		webHookApiKey:  webHookApiKey,
 	}
 	fileHandler := http.StripPrefix("/app", fileServer(path))
 
