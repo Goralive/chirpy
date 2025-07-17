@@ -1,7 +1,9 @@
 package main
 
 import (
+	"database/sql"
 	"encoding/json"
+	"errors"
 	"net/http"
 	"strings"
 
@@ -69,12 +71,11 @@ func (cfg *apiConfig) handlerUpdateUser(response http.ResponseWriter, request *h
 }
 
 func (cfg *apiConfig) handlerChirpyRedWebhook(response http.ResponseWriter, request *http.Request) {
-	type data struct {
-		UserId uuid.UUID `json:"user_id"`
-	}
 	type parameters struct {
 		Event string `json:"event"`
-		Data  data   `json:"data"`
+		Data  struct {
+			UserId uuid.UUID `json:"user_id"`
+		}
 	}
 
 	apiKey, apiKeyErr := auth.GetApiKey(request.Header)
@@ -83,9 +84,7 @@ func (cfg *apiConfig) handlerChirpyRedWebhook(response http.ResponseWriter, requ
 		return
 	}
 
-	localApiKey := cfg.webHookApiKey
-
-	if strings.Compare(apiKey, localApiKey) != 0 {
+	if strings.Compare(apiKey, cfg.webHookApiKey) != 0 {
 		respondWithError(response, http.StatusUnauthorized, "Invalid apiKey", nil)
 		return
 	}
@@ -108,7 +107,11 @@ func (cfg *apiConfig) handlerChirpyRedWebhook(response http.ResponseWriter, requ
 
 	err := cfg.db.UpdateUserChirpyRed(request.Context(), userId)
 	if err != nil {
-		respondWithError(response, http.StatusNotFound, "", err)
+		if errors.Is(err, sql.ErrNoRows) {
+			respondWithError(response, http.StatusNotFound, "User not found", err)
+			return
+		}
+		respondWithError(response, http.StatusInternalServerError, "Can't update user", err)
 		return
 	}
 	response.WriteHeader(http.StatusNoContent)
